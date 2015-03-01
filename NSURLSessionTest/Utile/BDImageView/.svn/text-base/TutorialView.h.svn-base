@@ -1,0 +1,37 @@
+//
+//  TutorialView.h
+//  ImageViewTest
+//
+//  Created by sazu on 11/03/13.
+//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import <UIKit/UIImageView.h>
+
+@class TutorialView;
+
+//コールバック
+@protocol TutorialViewDelegate
+- (void)endTutorial:(TutorialView*)view;
+@end
+
+@interface TutorialView : UIView {
+	int maxCount;
+	NSMutableArray *messageArray;
+	BOOL touchlockFlag;
+	id<TutorialViewDelegate> delegate;
+	
+	UIView *backView;//背景
+	UIImageView *messageView;//吹き出し
+	UIImageView *characterView;//キャラクター
+//	UITextView *textView;//メッセージ
+	UILabel *labelView;//メッセージ
+}
+
+@property (nonatomic, assign) id delegate;
+
+-(id)initWithBackViewSize:(CGSize)backSize;
+
+@end
+

@@ -1,0 +1,204 @@
+//
+//  TutorialView.m
+//  ImageViewTest
+//
+//  Created by sazu on 11/03/13.
+//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//
+
+#import "TutorialView.h"
+
+
+@interface TutorialView()
+-(void)fadeinMessage;
+-(void)unlockTouch;
+@end
+
+@implementation TutorialView
+
+@synthesize delegate;
+
+#pragma mark -
+#pragma mark touches
+
+//タップを検出
+- (void)touchesEnded:(NSSet*)touches withEvent:(UIEvent*)event{
+	
+	//UITouch *aTouch = [touches anyObject];
+	PFDLog(@"touchesEnded");
+	
+	if(touchlockFlag)
+	{
+		return;
+	}
+	
+	if([messageArray count] == 0)
+	{
+
+		if(delegate != nil)
+		{
+			[delegate endTutorial:self];
+		}
+	}
+	else
+	{
+		//先頭のメッセージを取り出す
+		NSString *messageStr = [messageArray objectAtIndex:0];
+		
+		labelView.text = messageStr;
+		
+		//表示済みのメッセージを配列から削除
+		[messageArray removeObjectAtIndex:0];
+	}
+}
+
+-(void)unlockTouch
+{
+	touchlockFlag = NO;
+}
+
+#pragma mark -
+#pragma mark init & dealloc
+
+-(void)fadeinMessage
+{
+	// アニメーション処理
+	[UIView beginAnimations:nil context:NULL];
+	//アニメーションブロックを作成
+	[UIView setAnimationDuration:1.0]; //何秒間でアニメーションさせるか
+	[UIView setAnimationBeginsFromCurrentState:YES];
+	//フェードイン
+	messageView.alpha = 1.0f;
+	//アニメーションブロックをコミットします
+	[UIView commitAnimations];
+}
+
+-(id)initWithBackViewSize:(CGSize)backSize
+{
+	self = [self init];
+	
+	if(self)
+	{
+		float width = backSize.width;
+		float height = backSize.height;
+		self.frame = CGRectMake(0, 0, width, height);
+		backView.frame = self.frame;
+	}
+	
+	return self;
+}
+
+-(id)init
+{
+	self = [super init];
+    if (self) {
+		self.frame = CGRectMake(0, 0, 480, 320);
+		NSLog(@"width:%f, height:%f",self.frame.size.width, self.frame.size.height);
+		self.backgroundColor = [UIColor clearColor]; 
+		
+		//背景
+		backView = [[UIView alloc] init];
+		backView.frame = self.frame;
+		backView.backgroundColor = [UIColor grayColor];
+		backView.alpha = 0.5f;
+		
+		[self addSubview:backView];
+		
+		//吹き出し
+		UIImage *messageImage = [UIImage imageNamed:@"tutorialBalloonCircle.png"];
+		messageView = [[UIImageView alloc] initWithImage:messageImage];
+		messageView.frame = CGRectMake(50, 50, messageView.frame.size.width, messageView.frame.size.height);
+		messageView.alpha = 0.0f;
+		[self addSubview:messageView];
+		
+		//メッセージの読込み
+		NSString *messageStr = @""; 
+		NSString *path = [[NSBundle mainBundle] pathForResource:@"tutorial" ofType:@"plist"];
+		NSDictionary *plist = [NSDictionary dictionaryWithContentsOfFile:path];
+		
+		messageArray = [NSMutableArray arrayWithArray:[plist objectForKey:@"message"]];
+		[messageArray retain];
+		
+		if([messageArray count] != 0)
+		{
+			//先頭のメッセージを取り出す
+			messageStr = [messageArray objectAtIndex:0];
+		}
+		
+		//メッセージ
+		labelView = [[[UILabel alloc] init] autorelease];
+		labelView.frame = CGRectMake(34, 10, messageView.frame.size.width -60, messageView.frame.size.height -20);
+		labelView.text = messageStr;
+		labelView.textColor = [UIColor whiteColor];
+		labelView.backgroundColor = [UIColor clearColor];
+		labelView.font = [UIFont fontWithName:@"Verdana-Bold" size:13];
+		labelView.numberOfLines = 6;
+//		textView = [[[UITextView alloc] init] autorelease];
+//		textView.frame = CGRectMake(20, 20, messageView.frame.size.width -20, messageView.frame.size.height -20);
+//		textView.backgroundColor = [UIColor clearColor];
+//		textView.editable = NO;
+//		textView.textAlignment = UITextAlignmentLeft;
+//		textView.text = messageStr;
+//		textView.textColor = [UIColor whiteColor];
+//		//textView.font = [UIFont fontWithName:_FONT_HIRAKAKU_G_PRON_W6_ size:_FONTSIZE_14_];
+//		textView.scrollEnabled = YES;
+		
+		[messageView addSubview:labelView];
+		
+		NSArray *animationImageNames = [NSArray arrayWithObjects:@"tutorialBtnNext1.png", @"tutorialBtnNext2.png", nil];
+		NSMutableArray *animationImages = [NSMutableArray arrayWithCapacity:[animationImageNames count]];
+		
+		for (NSString *animationImageName in animationImageNames) {
+			UIImage *image = [UIImage imageNamed:animationImageName];
+			[animationImages addObject:image];
+		}
+
+		UIImageView *clickView = [[[UIImageView alloc] initWithImage:[animationImages objectAtIndex:0]] autorelease];
+		clickView.frame = CGRectMake(180, 160, clickView.frame.size.width, clickView.frame.size.height);
+		clickView.animationImages = animationImages;
+		clickView.animationDuration = 1.0;
+		[clickView startAnimating];
+		
+		[messageView addSubview:clickView];
+		
+		//表示済みのメッセージを配列から削除
+		[messageArray removeObjectAtIndex:0];
+		
+		//キャラクター
+		UIImage *characterImage = [UIImage imageNamed:@"tutorialAvatar.png"];
+		characterView = [[UIImageView alloc] initWithImage:characterImage];
+		characterView.frame = CGRectMake(320, 320, characterView.frame.size.width, characterView.frame.size.height);
+		[self addSubview:characterView];
+		
+		// アニメーション処理
+		[UIView beginAnimations:nil context:NULL];
+		//アニメーションブロックを作成
+		[UIView setAnimationDuration:0.3]; //何秒間でアニメーションさせるか
+		[UIView setAnimationBeginsFromCurrentState:YES];
+		//座標移動
+		characterView.frame = CGRectMake(320, 120, characterView.frame.size.width, characterView.frame.size.height);
+		//アニメーションブロックをコミットします
+		[UIView commitAnimations];
+		
+		touchlockFlag = YES;
+		
+		[self performSelector:@selector(fadeinMessage) withObject:nil afterDelay:0.5f];
+		[self performSelector:@selector(unlockTouch) withObject:nil afterDelay:3.0f];
+		
+		//[self setUserInteractionEnabled:YES];
+    }
+	
+	return self;
+}
+
+-(void)dealloc
+{
+	[backView release];
+	[messageView release];
+	[characterView release];
+	if(messageArray)[messageArray release];
+	[super dealloc];
+	
+}
+
+@end
